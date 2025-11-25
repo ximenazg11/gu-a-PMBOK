@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor PMBOK - Capítulos, Diagramas y Documentos</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <!-- PDF.js para visualización de PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+       
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+       
+        /* Estilos para el menú lateral */
+        .sidebar {
+            width: 320px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            height: 100vh;
+            overflow-y: auto;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+       
+        .sidebar-header {
+            padding: 0 20px 15px 20px;
+            border-bottom: 1px solid #34495e;
+            margin-bottom: 15px;
+        }
+       
+        .sidebar h2 {
+            margin-bottom: 15px;
+        }
+       
+        .sidebar-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+       
+        .sidebar-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            flex: 1;
+            transition: background-color 0.3s;
+        }
+       
+        .sidebar-btn:hover {
+            background-color: #2980b9;
+        }
+       
+        .chapters-container {
+            padding: 0 10px;
+        }
+       
+        .chapters-list {
+            list-style-type: none;
+        }
+       
+        .chapter-item {
+            margin-bottom: 5px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+       
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            background-color: #34495e;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+       
+        .chapter-header:hover {
+            background-color: #3d566e;
+        }
+       
+        .chapter-header.active {
+            background-color: #3498db;
+        }
+       
+        .chapter-title {
+            flex: 1;
+            padding: 5px 0;
+        }
+       
+        .chapter-actions {
+            display: flex;
+            gap: 5px;
+        }
+       
+        .chapter-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+       
+        .chapter-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+       
+        .subchapters-list {
+            list-style-type: none;
+            background-color: #2a3b4d;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+       
+        .chapter-item.expanded .subchapters-list {
+            max-height: 500px;
+        }
+       
+        .subchapter-item {
+            padding: 8px 15px 8px 30px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+       
+        .subchapter-item:hover {
+            background-color: #34495e;
+        }
+       
+        .subchapter-item.active {
+            background-color: #3498db;
+        }
+       
+        .subchapter-title {
+            flex: 1;
+        }
+       
+        .subchapter-actions {
+            display: flex;
+            gap: 5px;
+        }
+       
+        .subchapter-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+       
+        .subchapter-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+       
+        /* Estilos para el contenido principal */
+        .main-content {
+            flex: 1;
+            margin-left: 320px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+       
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+       
+        .editor-title {
+            font-size: 24px;
+            color: #2c3e50;
+        }
+       
+        .editor-controls {
+            display: flex;
+            gap: 10px;
+        }
+       
+        .control-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+       
+        .control-btn:hover {
+            background-color: #2980b9;
+        }
+       
+        .control-btn.save {
+            background-color: #2ecc71;
+        }
+       
+        .control-btn.save:hover {
+            background-color: #27ae60;
+        }
+       
+        .control-btn.load {
+            background-color: #9b59b6;
+        }
+       
+        .control-btn.load:hover {
+            background-color: #8e44ad;
+        }
+       
+        .control-btn.reset {
+            background-color: #e74c3c;
+        }
+       
+        .control-btn.reset:hover {
+            background-color: #c0392b;
+        }
+       
+        /* Estilos para los editores */
+        .editor-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+       
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+       
+        .section-controls {
+            display: flex;
+            gap: 10px;
+        }
+       
+        .section-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+       
+        .section-btn:hover {
+            background-color: #f0f7ff;
+        }
+       
+        .form-group {
+            margin-bottom: 15px;
+        }
+       
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+       
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+       
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+       
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+       
+        .diagram-type, .document-type {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+       
+        .type-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+       
+        .type-option.active {
+            border-color: #3498db;
+            background-color: #f0f7ff;
+        }
+       
+        .diagram-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+       
+        .diagram-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+       
+        .diagram-preview .mermaid {
+            width: 100%;
+            text-align: center;
+        }
+       
+        .diagram-preview pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            width: 100%;
+        }
+       
+        .file-upload {
+            border: 2px dashed #3498db;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+       
+        .file-upload:hover {
+            background-color: #f0f7ff;
+        }
+       
+        .file-upload-icon {
+            font-size: 48px;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+       
+        .file-input {
+            display: none;
+        }
+       
+        .diagrams-list, .documents-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+       
+        .diagram-card, .document-card {
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+       
+        .diagram-card:hover, .document-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+       
+        .diagram-card-header, .document-card-header {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+        }
+       
+        .diagram-card-title, .document-card-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+       
+        .diagram-card-description, .document-card-description {
+            font-size: 14px;
+            color: #7f8c8d;
+            line-height: 1.4;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+       
+        .document-card-date {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-bottom: 10px;
+        }
+       
+        .diagram-card-actions, .document-card-actions {
+            display: flex;
+            gap: 10px;
+        }
+       
+        .diagram-card-btn, .document-card-btn {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+        }
+       
+        .diagram-card-btn:hover, .document-card-btn:hover {
+            background-color: #e1e8ed;
+        }
+       
+        .diagram-card-content {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            cursor: pointer;
+            flex-grow: 1;
+        }
+       
+        .document-card-content {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            flex-grow: 1;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+       
+        .document-icon {
+            font-size: 64px;
+            color: #e74c3c;
+            margin-bottom: 15px;
+        }
+       
+        .document-info {
+            text-align: center;
+        }
+       
+        .document-type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+       
+        .diagram-card-content img {
+            max-width: 100%;
+            max-height: 250px;
+            transition: transform 0.3s;
+        }
+       
+        .diagram-card-content img:hover {
+            transform: scale(1.05);
+        }
+       
+        .diagram-card-content .mermaid {
+            width: 100%;
+            cursor: pointer;
+        }
+       
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            grid-column: 1 / -1;
+        }
+       
+        /* Modal para vista completa */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+        }
+       
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            max-width: 90%;
+            max-height: 90%;
+            transition: transform 0.3s ease;
+        }
+       
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+       
+        .modal-zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1001;
+        }
+       
+        .zoom-btn {
+            background-color: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+       
+        .zoom-btn:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+       
+        /* Estilos para el visor de PDF */
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+        }
+       
+        .pdf-toolbar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+       
+        .pdf-nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+       
+        .pdf-page-info {
+            font-size: 14px;
+        }
+       
+        .pdf-canvas-container {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+       
+        .pdf-canvas {
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 100%;
+        }
+       
+        /* Estilos para presentaciones */
+        .presentation-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+       
+        .presentation-slide {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 90%;
+            max-height: 90%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+       
+        .presentation-title {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+       
+        .presentation-content {
+            font-size: 18px;
+            color: #555;
+            line-height: 1.6;
+            text-align: center;
+            max-width: 800px;
+        }
+       
+        .presentation-nav {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+       
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+           
+            .main-content {
+                margin-left: 0;
+            }
+           
+            .editor-controls {
+                flex-direction: column;
+            }
+           
+            .diagrams-list, .documents-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú lateral -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Capítulos PMBOK</h2>
+            <div class="sidebar-controls">
+                <button class="sidebar-btn" id="addChapterBtn">+ Capítulo</button>
+                <button class="sidebar-btn" id="expandAllBtn">Expandir</button>
+                <button class="sidebar-btn" id="collapseAllBtn">Contraer</button>
+            </div>
+        </div>
+       
+        <div class="chapters-container">
+            <ul class="chapters-list" id="chaptersList">
+                <!-- Los capítulos se generarán aquí -->
+            </ul>
+        </div>
+    </div>
+   
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <div class="editor-header">
+            <h1 class="editor-title" id="editorTitle">Editor PMBOK</h1>
+            <div class="editor-controls">
+                <button class="control-btn save" id="saveBtn">Guardar Proyecto</button>
+                <button class="control-btn load" id="loadBtn">Cargar Proyecto</button>
+                <button class="control-btn reset" id="resetBtn">Nuevo Proyecto</button>
+            </div>
+        </div>
+       
+        <!-- Editor de capítulo/subcapítulo -->
+        <div class="editor-section" id="chapterEditor" style="display: none;">
+            <div class="section-title">
+                <span id="editorSectionTitle">Editar Capítulo</span>
+                <div class="section-controls">
+                    <button class="section-btn" id="addSubchapterBtn">+ Subcapítulo</button>
+                    <button class="section-btn" id="addDiagramBtn">+ Diagrama</button>
+                    <button class="section-btn" id="addDocumentBtn">+ Documento</button>
+                </div>
+            </div>
+           
+            <div class="form-group">
+                <label for="chapterTitle">Título:</label>
+                <input type="text" id="chapterTitle" placeholder="Ingresa el título del capítulo">
+            </div>
+           
+            <div class="form-group">
+                <label for="chapterDescription">Descripción:</label>
+                <textarea id="chapterDescription" placeholder="Ingresa la descripción del capítulo"></textarea>
+            </div>
+        </div>
+       
+        <!-- Editor de diagramas -->
+        <div class="editor-section" id="diagramEditor" style="display: none;">
+            <div class="section-title">
+                <span id="diagramEditorTitle">Agregar Diagrama</span>
+            </div>
+           
+            <div class="form-group">
+                <label for="diagramTitle">Título del Diagrama:</label>
+                <input type="text" id="diagramTitle" placeholder="Ingresa el título del diagrama">
+            </div>
+           
+            <div class="form-group">
+                <label for="diagramDescription">Descripción:</label>
+                <textarea id="diagramDescription" placeholder="Ingresa la descripción del diagrama"></textarea>
+            </div>
+           
+            <div class="form-group">
+                <label>Tipo de Diagrama:</label>
+                <div class="diagram-type">
+                    <div class="type-option active" data-type="mermaid">Código Mermaid</div>
+                    <div class="type-option" data-type="image">Imagen (JPG/PNG)</div>
+                </div>
+            </div>
+           
+            <div class="form-group" id="mermaidInputGroup">
+                <label for="diagramCode">Código Mermaid:</label>
+                <textarea id="diagramCode" placeholder="Pega aquí el código Mermaid para generar un diagrama"></textarea>
+            </div>
+           
+            <div class="form-group" id="imageInputGroup" style="display: none;">
+                <label>Subir Imagen:</label>
+                <div class="file-upload" id="diagramFileUploadArea">
+                    <div class="file-upload-icon">📁</div>
+                    <p>Haz clic aquí o arrastra una imagen JPG o PNG</p>
+                    <input type="file" id="diagramImage" class="file-input" accept=".jpg,.jpeg,.png">
+                </div>
+                <div id="diagramFileName">No se ha seleccionado ningún archivo</div>
+            </div>
+           
+            <div class="form-group">
+                <button class="control-btn" id="saveDiagramBtn">Guardar Diagrama</button>
+                <button class="control-btn reset" id="cancelDiagramBtn" style="margin-left: 10px;">Cancelar</button>
+            </div>
+           
+            <div class="diagram-preview" id="diagramPreview">
+                <p>La vista previa aparecerá aquí</p>
+            </div>
+        </div>
+       
+        <!-- Editor de documentos -->
+        <div class="editor-section" id="documentEditor" style="display: none;">
+            <div class="section-title">
+                <span id="documentEditorTitle">Agregar Documento</span>
+            </div>
+           
+            <div class="form-group">
+                <label for="documentTitle">Título del Documento:</label>
+                <input type="text" id="documentTitle" placeholder="Ingresa el título del documento">
+            </div>
+           
+            <div class="form-group">
+                <label for="documentDescription">Descripción:</label>
+                <textarea id="documentDescription" placeholder="Ingresa la descripción del documento"></textarea>
+            </div>
+           
+            <div class="form-group">
+                <label for="documentDate">Fecha:</label>
+                <input type="date" id="documentDate">
+            </div>
+           
+            <div class="form-group">
+                <label>Tipo de Documento:</label>
+                <div class="document-type">
+                    <div class="type-option active" data-type="pdf">PDF</div>
+                    <div class="type-option" data-type="presentation">Presentación</div>
+                </div>
+            </div>
+           
+            <div class="form-group">
+                <label>Subir Documento:</label>
+                <div class="file-upload" id="documentFileUploadArea">
+                    <div class="file-upload-icon">📄</div>
+                    <p id="documentUploadText">Haz clic aquí o arrastra un archivo PDF</p>
+                    <input type="file" id="documentFile" class="file-input" accept=".pdf">
+                </div>
+                <div id="documentFileName">No se ha seleccionado ningún archivo</div>
+            </div>
+           
+            <div class="form-group">
+                <button class="control-btn" id="saveDocumentBtn">Guardar Documento</button>
+                <button class="control-btn reset" id="cancelDocumentBtn" style="margin-left: 10px;">Cancelar</button>
+            </div>
+        </div>
+       
+        <!-- Lista de diagramas -->
+        <div class="editor-section" id="diagramsListSection">
+            <div class="section-title">
+                <span>Diagramas</span>
+            </div>
+           
+            <div class="diagrams-list" id="diagramsList">
+                <div class="empty-state">
+                    <p>No hay diagramas disponibles. Agrega un diagrama para verlo aquí.</p>
+                </div>
+            </div>
+        </div>
+       
+        <!-- Lista de documentos -->
+        <div class="editor-section" id="documentsListSection">
+            <div class="section-title">
+                <span>Documentos</span>
+            </div>
+           
+            <div class="documents-list" id="documentsList">
+                <div class="empty-state">
+                    <p>No hay documentos disponibles. Agrega un documento para verlo aquí.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para vista completa de imágenes -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close" id="modalClose">&times;</span>
+        <div class="modal-zoom-controls">
+            <button class="zoom-btn" id="zoomIn">+</button>
+            <button class="zoom-btn" id="zoomOut">-</button>
+            <button class="zoom-btn" id="zoomReset">↺</button>
+        </div>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <!-- Modal para vista de documentos -->
+    <div id="documentModal" class="modal">
+        <span class="modal-close" id="documentModalClose">&times;</span>
+        <div id="documentViewer" class="modal-content" style="width: 90%; height: 90%; background: white; display: flex; flex-direction: column;">
+            <!-- El contenido del visor de documentos se cargará aquí -->
+        </div>
+    </div>
+
+    <script>
+        // Estado de la aplicación
+        let appState = {
+            chapters: [],
+            currentChapter: null,
+            currentSubchapter: null,
+            currentDiagram: null,
+            currentDocument: null,
+            editingDiagram: false,
+            editingDocument: false
+        };
+
+        // Elementos del DOM
+        const chaptersList = document.getElementById('chaptersList');
+        const addChapterBtn = document.getElementById('addChapterBtn');
+        const expandAllBtn = document.getElementById('expandAllBtn');
+        const collapseAllBtn = document.getElementById('collapseAllBtn');
+        const editorTitle = document.getElementById('editorTitle');
+        const saveBtn = document.getElementById('saveBtn');
+        const loadBtn = document.getElementById('loadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const chapterEditor = document.getElementById('chapterEditor');
+        const editorSectionTitle = document.getElementById('editorSectionTitle');
+        const addSubchapterBtn = document.getElementById('addSubchapterBtn');
+        const addDiagramBtn = document.getElementById('addDiagramBtn');
+        const addDocumentBtn = document.getElementById('addDocumentBtn');
+        const chapterTitle = document.getElementById('chapterTitle');
+        const chapterDescription = document.getElementById('chapterDescription');
+        const diagramEditor = document.getElementById('diagramEditor');
+        const diagramEditorTitle = document.getElementById('diagramEditorTitle');
+        const diagramTitle = document.getElementById('diagramTitle');
+        const diagramDescription = document.getElementById('diagramDescription');
+        const diagramCode = document.getElementById('diagramCode');
+        const diagramImage = document.getElementById('diagramImage');
+        const diagramFileUploadArea = document.getElementById('diagramFileUploadArea');
+        const diagramFileName = document.getElementById('diagramFileName');
+        const mermaidInputGroup = document.getElementById('mermaidInputGroup');
+        const imageInputGroup = document.getElementById('imageInputGroup');
+        const saveDiagramBtn = document.getElementById('saveDiagramBtn');
+        const cancelDiagramBtn = document.getElementById('cancelDiagramBtn');
+        const diagramPreview = document.getElementById('diagramPreview');
+        const diagramsListSection = document.getElementById('diagramsListSection');
+        const diagramsList = document.getElementById('diagramsList');
+       
+        // Elementos del editor de documentos
+        const documentEditor = document.getElementById('documentEditor');
+        const documentEditorTitle = document.getElementById('documentEditorTitle');
+        const documentTitle = document.getElementById('documentTitle');
+        const documentDescription = document.getElementById('documentDescription');
+        const documentDate = document.getElementById('documentDate');
+        const documentFile = document.getElementById('documentFile');
+        const documentFileUploadArea = document.getElementById('documentFileUploadArea');
+        const documentUploadText = document.getElementById('documentUploadText');
+        const documentFileName = document.getElementById('documentFileName');
+        const saveDocumentBtn = document.getElementById('saveDocumentBtn');
+        const cancelDocumentBtn = document.getElementById('cancelDocumentBtn');
+        const documentsListSection = document.getElementById('documentsListSection');
+        const documentsList = document.getElementById('documentsList');
+
+        // Elementos del modal
+        const imageModal = document.getElementById('imageModal');
+        const modalClose = document.getElementById('modalClose');
+        const modalImage = document.getElementById('modalImage');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const zoomResetBtn = document.getElementById('zoomReset');
+       
+        // Elementos del modal de documentos
+        const documentModal = document.getElementById('documentModal');
+        const documentModalClose = document.getElementById('documentModalClose');
+        const documentViewer = document.getElementById('documentViewer');
+
+        // Variables para el zoom
+        let currentZoom = 1;
+        const ZOOM_STEP = 0.1;
+        const MIN_ZOOM = 0.5;
+        const MAX_ZOOM = 3;
+       
+        // Variables para PDF
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+
+        // Inicializar Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+
+        // Inicializar PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // Inicializar la aplicación
+        function initApp() {
+            // Cargar datos guardados si existen
+            const savedData = localStorage.getItem('pmbokEditor');
+            if (savedData) {
+                try {
+                    appState = JSON.parse(savedData);
+                    renderChapters();
+                   
+                    // Si hay capítulos, seleccionar el primero
+                    if (appState.chapters.length > 0) {
+                        selectChapter(appState.chapters[0].id);
+                    }
+                } catch (e) {
+                    console.error("Error al cargar datos guardados:", e);
+                }
+            } else {
+                // Crear capítulos iniciales
+                createInitialChapters();
+            }
+           
+            // Configurar event listeners
+            setupEventListeners();
+           
+            // Establecer fecha actual por defecto
+            documentDate.valueAsDate = new Date();
+        }
+
+        // Crear capítulos iniciales
+        function createInitialChapters() {
+            const initialChapters = [
+                {
+                    id: generateId(),
+                    title: "Capítulo 1: Introducción",
+                    description: "Conceptos fundamentales y marco de trabajo para la dirección de proyectos",
+                    expanded: true,
+                    subchapters: [],
+                    diagrams: [
+                        {
+                            id: generateId(),
+                            title: "Flujo de Procesos de Dirección de Proyectos",
+                            description: "Este diagrama muestra cómo interactúan los diferentes procesos de dirección de proyectos.",
+                            type: "mermaid",
+                            content: "graph TD\n  A[Iniciar Proyecto] --> B[Planificar Proyecto]\n  B --> C[Ejecutar Proyecto]\n  C --> D[Monitorear y Controlar]\n  D --> E[Cerrar Proyecto]"
+                        },
+                        {
+                            id: generateId(),
+                            title: "Triple Restricción",
+                            description: "Representa el equilibrio entre alcance, tiempo y costo, y cómo afectan a la calidad.",
+                            type: "mermaid",
+                            content: "graph LR\n  A[Alcance] --> D[Calidad]\n  B[Tiempo] --> D\n  C[Costo] --> D"
+                        }
+                    ],
+                    documents: []
+                },
+                {
+                    id: generateId(),
+                    title: "Capítulo 2: El Entorno en el que los Proyectos Operan",
+                    description: "Factores organizacionales y ambientales que influyen en los proyectos",
+                    expanded: false,
+                    subchapters: [],
+                    diagrams: [],
+                    documents: []
+                }
+            ];
+           
+            appState.chapters = initialChapters;
+            renderChapters();
+           
+            // Seleccionar el primer capítulo
+            if (appState.chapters.length > 0) {
+                selectChapter(appState.chapters[0].id);
+            }
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botones del sidebar
+            addChapterBtn.addEventListener('click', addNewChapter);
+            expandAllBtn.addEventListener('click', expandAllChapters);
+            collapseAllBtn.addEventListener('click', collapseAllChapters);
+           
+            // Botones de control
+            saveBtn.addEventListener('click', saveProject);
+            loadBtn.addEventListener('click', loadProject);
+            resetBtn.addEventListener('click', resetProject);
+           
+            // Botones del editor
+            addSubchapterBtn.addEventListener('click', addNewSubchapter);
+            addDiagramBtn.addEventListener('click', showDiagramEditor);
+            addDocumentBtn.addEventListener('click', showDocumentEditor);
+           
+            // Botones del editor de diagramas
+            saveDiagramBtn.addEventListener('click', saveDiagram);
+            cancelDiagramBtn.addEventListener('click', cancelDiagramEditing);
+           
+            // Botones del editor de documentos
+            saveDocumentBtn.addEventListener('click', saveDocument);
+            cancelDocumentBtn.addEventListener('click', cancelDocumentEditing);
+           
+            // Cambio de tipo de diagrama
+            document.querySelectorAll('.diagram-type .type-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.diagram-type .type-option').forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                   
+                    const type = this.getAttribute('data-type');
+                    if (type === 'mermaid') {
+                        mermaidInputGroup.style.display = 'block';
+                        imageInputGroup.style.display = 'none';
+                    } else {
+                        mermaidInputGroup.style.display = 'none';
+                        imageInputGroup.style.display = 'block';
+                    }
+                   
+                    updateDiagramPreview();
+                });
+            });
+           
+            // Cambio de tipo de documento
+            document.querySelectorAll('.document-type .type-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.document-type .type-option').forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                   
+                    const type = this.getAttribute('data-type');
+                    if (type === 'pdf') {
+                        documentUploadText.textContent = "Haz clic aquí o arrastra un archivo PDF";
+                        documentFile.setAttribute('accept', '.pdf');
+                    } else {
+                        documentUploadText.textContent = "Haz clic aquí o arrastra una presentación (PPT, PPTX)";
+                        documentFile.setAttribute('accept', '.ppt,.pptx');
+                    }
+                });
+            });
+           
+            // Actualizar vista previa al escribir
+            diagramTitle.addEventListener('input', updateDiagramPreview);
+            diagramDescription.addEventListener('input', updateDiagramPreview);
+            diagramCode.addEventListener('input', updateDiagramPreview);
+           
+            // Manejo de carga de archivos de diagramas
+            diagramFileUploadArea.addEventListener('click', () => diagramImage.click());
+            diagramFileUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                diagramFileUploadArea.style.backgroundColor = '#f0f7ff';
+            });
+            diagramFileUploadArea.addEventListener('dragleave', () => {
+                diagramFileUploadArea.style.backgroundColor = '';
+            });
+            diagramFileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                diagramFileUploadArea.style.backgroundColor = '';
+                if (e.dataTransfer.files.length) {
+                    diagramImage.files = e.dataTransfer.files;
+                    handleDiagramFileSelect();
+                }
+            });
+            diagramImage.addEventListener('change', handleDiagramFileSelect);
+           
+            // Manejo de carga de archivos de documentos
+            documentFileUploadArea.addEventListener('click', () => documentFile.click());
+            documentFileUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                documentFileUploadArea.style.backgroundColor = '#f0f7ff';
+            });
+            documentFileUploadArea.addEventListener('dragleave', () => {
+                documentFileUploadArea.style.backgroundColor = '';
+            });
+            documentFileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                documentFileUploadArea.style.backgroundColor = '';
+                if (e.dataTransfer.files.length) {
+                    documentFile.files = e.dataTransfer.files;
+                    handleDocumentFileSelect();
+                }
+            });
+            documentFile.addEventListener('change', handleDocumentFileSelect);
+           
+            // Guardar cambios en tiempo real
+            chapterTitle.addEventListener('input', saveCurrentChapter);
+            chapterDescription.addEventListener('input', saveCurrentChapter);
+           
+            // Event listeners para el modal de imágenes
+            modalClose.addEventListener('click', closeImageModal);
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            zoomResetBtn.addEventListener('click', resetZoom);
+           
+            // Cerrar modal de imágenes al hacer clic fuera de la imagen
+            imageModal.addEventListener('click', (e) => {
+                if (e.target === imageModal) {
+                    closeImageModal();
+                }
+            });
+           
+            // Zoom con la rueda del ratón en el modal de imágenes
+            modalImage.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            });
+           
+            // Prevenir que el modal cierre al hacer clic en la imagen
+            modalImage.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+           
+            // Event listeners para el modal de documentos
+            documentModalClose.addEventListener('click', closeDocumentModal);
+           
+            // Cerrar modal de documentos al hacer clic fuera del contenido
+            documentModal.addEventListener('click', (e) => {
+                if (e.target === documentModal) {
+                    closeDocumentModal();
+                }
+            });
+        }
+
+        // Manejar selección de archivo de diagrama
+        function handleDiagramFileSelect() {
+            if (diagramImage.files.length > 0) {
+                const file = diagramImage.files[0];
+                diagramFileName.textContent = `Archivo seleccionado: ${file.name}`;
+                updateDiagramPreview();
+            } else {
+                diagramFileName.textContent = "No se ha seleccionado ningún archivo";
+            }
+        }
+
+        // Manejar selección de archivo de documento
+        function handleDocumentFileSelect() {
+            if (documentFile.files.length > 0) {
+                const file = documentFile.files[0];
+                documentFileName.textContent = `Archivo seleccionado: ${file.name}`;
+            } else {
+                documentFileName.textContent = "No se ha seleccionado ningún archivo";
+            }
+        }
+
+        // Funciones para el modal de imágenes y zoom
+        function openImageModal(imageSrc) {
+            imageModal.style.display = 'block';
+            modalImage.src = imageSrc;
+            resetZoom();
+        }
+
+        function closeImageModal() {
+            imageModal.style.display = 'none';
+        }
+
+        function zoomIn() {
+            if (currentZoom < MAX_ZOOM) {
+                currentZoom += ZOOM_STEP;
+                updateZoom();
+            }
+        }
+
+        function zoomOut() {
+            if (currentZoom > MIN_ZOOM) {
+                currentZoom -= ZOOM_STEP;
+                updateZoom();
+            }
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            updateZoom();
+        }
+
+        function updateZoom() {
+            modalImage.style.transform = `translate(-50%, -50%) scale(${currentZoom})`;
+        }
+
+        // Funciones para el modal de documentos
+        function openDocumentModal(documentId) {
+            let doc = null;
+           
+            // Buscar el documento en el capítulo o subcapítulo actual
+            if (appState.currentSubchapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    const subchapter = chapter.subchapters.find(s => s.id === appState.currentSubchapter);
+                    if (subchapter) {
+                        doc = subchapter.documents.find(d => d.id === documentId);
+                    }
+                }
+            } else if (appState.currentChapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    doc = chapter.documents.find(d => d.id === documentId);
+                }
+            }
+           
+            if (doc) {
+                documentModal.style.display = 'block';
+               
+                if (doc.type === 'pdf') {
+                    renderPDF(doc.file);
+                } else {
+                    renderPresentation(doc);
+                }
+            }
+        }
+
+        function closeDocumentModal() {
+            documentModal.style.display = 'none';
+            documentViewer.innerHTML = '';
+        }
+
+        // Renderizar PDF en el modal
+        function renderPDF(pdfData) {
+            documentViewer.innerHTML = `
+                <div class="pdf-viewer">
+                    <div class="pdf-toolbar">
+                        <div class="pdf-nav">
+                            <button class="control-btn" id="prevPage">Anterior</button>
+                            <button class="control-btn" id="nextPage">Siguiente</button>
+                            <span class="pdf-page-info">Página: <span id="pageNum">1</span> / <span id="pageCount">0</span></span>
+                        </div>
+                        <div class="pdf-zoom">
+                            <button class="control-btn" id="zoomInPdf">+</button>
+                            <button class="control-btn" id="zoomOutPdf">-</button>
+                        </div>
+                    </div>
+                    <div class="pdf-canvas-container">
+                        <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+                    </div>
+                </div>
+            `;
+           
+            const canvas = document.getElementById('pdfCanvas');
+            const ctx = canvas.getContext('2d');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const pageNumElem = document.getElementById('pageNum');
+            const pageCountElem = document.getElementById('pageCount');
+            const zoomInPdfBtn = document.getElementById('zoomInPdf');
+            const zoomOutPdfBtn = document.getElementById('zoomOutPdf');
+           
+            let pdfScale = 1.5;
+           
+            // Cargar el PDF
+            const loadingTask = pdfjsLib.getDocument({ data: atob(pdfData.split(',')[1]) });
+            loadingTask.promise.then(function(pdf) {
+                pdfDoc = pdf;
+                pageCountElem.textContent = pdfDoc.numPages;
+               
+                // Renderizar la primera página
+                renderPage(pageNum);
+               
+                // Event listeners para navegación
+                prevPageBtn.addEventListener('click', function() {
+                    if (pageNum <= 1) return;
+                    pageNum--;
+                    renderPage(pageNum);
+                });
+               
+                nextPageBtn.addEventListener('click', function() {
+                    if (pageNum >= pdfDoc.numPages) return;
+                    pageNum++;
+                    renderPage(pageNum);
+                });
+               
+                // Event listeners para zoom
+                zoomInPdfBtn.addEventListener('click', function() {
+                    pdfScale += 0.1;
+                    renderPage(pageNum);
+                });
+               
+                zoomOutPdfBtn.addEventListener('click', function() {
+                    if (pdfScale > 0.5) {
+                        pdfScale -= 0.1;
+                        renderPage(pageNum);
+                    }
+                });
+            });
+           
+            function renderPage(num) {
+                pageRendering = true;
+               
+                // Obtener la página
+                pdfDoc.getPage(num).then(function(page) {
+                    const viewport = page.getViewport({ scale: pdfScale });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                   
+                    // Renderizar la página
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport
+                    };
+                    const renderTask = page.render(renderContext);
+                   
+                    renderTask.promise.then(function() {
+                        pageRendering = false;
+                        pageNumElem.textContent = num;
+                       
+                        if (pageNumPending !== null) {
+                            renderPage(pageNumPending);
+                            pageNumPending = null;
+                        }
+                    });
+                });
+            }
+        }
+
+        // Renderizar presentación en el modal (simulación)
+        function renderPresentation(doc) {
+            documentViewer.innerHTML = `
+                <div class="presentation-viewer">
+                    <div class="presentation-slide">
+                        <h1 class="presentation-title">${doc.title}</h1>
+                        <div class="presentation-content">
+                            <p>${doc.description}</p>
+                            <p>Fecha: ${formatDate(doc.date)}</p>
+                            <p><em>Esta es una vista previa de la presentación. Para ver el archivo completo, descárgalo.</em></p>
+                        </div>
+                    </div>
+                    <div class="presentation-nav">
+                        <button class="control-btn" id="downloadPresentation">Descargar Presentación</button>
+                    </div>
+                </div>
+            `;
+           
+            const downloadBtn = document.getElementById('downloadPresentation');
+            downloadBtn.addEventListener('click', function() {
+                // Crear un enlace de descarga
+                const a = document.createElement('a');
+                a.href = doc.file;
+                a.download = `${doc.title}.${doc.type === 'pdf' ? 'pdf' : 'pptx'}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        }
+
+        // Renderizar la lista de capítulos
+        function renderChapters() {
+            chaptersList.innerHTML = '';
+           
+            appState.chapters.forEach(chapter => {
+                const chapterItem = document.createElement('li');
+                chapterItem.className = `chapter-item ${chapter.expanded ? 'expanded' : ''}`;
+                chapterItem.innerHTML = `
+                    <div class="chapter-header ${appState.currentChapter === chapter.id ? 'active' : ''}" data-id="${chapter.id}">
+                        <span class="chapter-title">${chapter.title}</span>
+                        <div class="chapter-actions">
+                            <button class="chapter-btn edit-btn" title="Editar">✎</button>
+                            <button class="chapter-btn delete-btn" title="Eliminar">×</button>
+                        </div>
+                    </div>
+                    <ul class="subchapters-list">
+                        ${chapter.subchapters.map(subchapter => `
+                            <li class="subchapter-item ${appState.currentSubchapter === subchapter.id ? 'active' : ''}" data-id="${subchapter.id}">
+                                <span class="subchapter-title">${subchapter.title}</span>
+                                <div class="subchapter-actions">
+                                    <button class="subchapter-btn edit-btn" title="Editar">✎</button>
+                                    <button class="subchapter-btn delete-btn" title="Eliminar">×</button>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                chaptersList.appendChild(chapterItem);
+            });
+           
+            // Agregar event listeners a los capítulos y subcapítulos
+            document.querySelectorAll('.chapter-header').forEach(header => {
+                header.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('chapter-btn')) {
+                        const chapterId = this.getAttribute('data-id');
+                        toggleChapterExpansion(chapterId);
+                        selectChapter(chapterId);
+                    }
+                });
+               
+                // Botones de edición y eliminación
+                const editBtn = header.querySelector('.edit-btn');
+                const deleteBtn = header.querySelector('.delete-btn');
+               
+                editBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const chapterId = header.getAttribute('data-id');
+                    selectChapter(chapterId);
+                });
+               
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const chapterId = header.getAttribute('data-id');
+                    deleteChapter(chapterId);
+                });
+            });
+           
+            document.querySelectorAll('.subchapter-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('subchapter-btn')) {
+                        const subchapterId = this.getAttribute('data-id');
+                        selectSubchapter(subchapterId);
+                    }
+                });
+               
+                // Botones de edición y eliminación
+                const editBtn = item.querySelector('.edit-btn');
+                const deleteBtn = item.querySelector('.delete-btn');
+               
+                editBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const subchapterId = item.getAttribute('data-id');
+                    selectSubchapter(subchapterId);
+                });
+               
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const subchapterId = item.getAttribute('data-id');
+                    deleteSubchapter(subchapterId);
+                });
+            });
+        }
+
+        // Agregar nuevo capítulo
+        function addNewChapter() {
+            const newChapter = {
+                id: generateId(),
+                title: "Nuevo Capítulo",
+                description: "Descripción del nuevo capítulo",
+                expanded: true,
+                subchapters: [],
+                diagrams: [],
+                documents: []
+            };
+           
+            appState.chapters.push(newChapter);
+            renderChapters();
+            selectChapter(newChapter.id);
+            saveAppState();
+        }
+
+        // Agregar nuevo subcapítulo
+        function addNewSubchapter() {
+            if (!appState.currentChapter) return;
+           
+            const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+            if (!chapter) return;
+           
+            const newSubchapter = {
+                id: generateId(),
+                title: "Nuevo Subcapítulo",
+                description: "Descripción del nuevo subcapítulo",
+                diagrams: [],
+                documents: []
+            };
+           
+            chapter.subchapters.push(newSubchapter);
+            chapter.expanded = true;
+            renderChapters();
+            selectSubchapter(newSubchapter.id);
+            saveAppState();
+        }
+
+        // Expandir/contraer capítulo
+        function toggleChapterExpansion(chapterId) {
+            const chapter = appState.chapters.find(c => c.id === chapterId);
+            if (chapter) {
+                chapter.expanded = !chapter.expanded;
+                renderChapters();
+                saveAppState();
+            }
+        }
+
+        // Expandir todos los capítulos
+        function expandAllChapters() {
+            appState.chapters.forEach(chapter => {
+                chapter.expanded = true;
+            });
+            renderChapters();
+            saveAppState();
+        }
+
+        // Contraer todos los capítulos
+        function collapseAllChapters() {
+            appState.chapters.forEach(chapter => {
+                chapter.expanded = false;
+            });
+            renderChapters();
+            saveAppState();
+        }
+
+        // Seleccionar capítulo
+        function selectChapter(chapterId) {
+            appState.currentChapter = chapterId;
+            appState.currentSubchapter = null;
+           
+            const chapter = appState.chapters.find(c => c.id === chapterId);
+            if (chapter) {
+                editorTitle.textContent = `Editor: ${chapter.title}`;
+                editorSectionTitle.textContent = "Editar Capítulo";
+                chapterTitle.value = chapter.title;
+                chapterDescription.value = chapter.description;
+                chapterEditor.style.display = 'block';
+               
+                // Mostrar diagramas del capítulo
+                renderDiagrams(chapter.diagrams || []);
+               
+                // Mostrar documentos del capítulo
+                renderDocuments(chapter.documents || []);
+            }
+           
+            renderChapters();
+        }
+
+        // Seleccionar subcapítulo
+        function selectSubchapter(subchapterId) {
+            if (!appState.currentChapter) return;
+           
+            const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+            if (!chapter) return;
+           
+            const subchapter = chapter.subchapters.find(s => s.id === subchapterId);
+            if (subchapter) {
+                appState.currentSubchapter = subchapterId;
+               
+                editorTitle.textContent = `Editor: ${subchapter.title}`;
+                editorSectionTitle.textContent = "Editar Subcapítulo";
+                chapterTitle.value = subchapter.title;
+                chapterDescription.value = subchapter.description;
+                chapterEditor.style.display = 'block';
+               
+                // Mostrar diagramas del subcapítulo
+                renderDiagrams(subchapter.diagrams || []);
+               
+                // Mostrar documentos del subcapítulo
+                renderDocuments(subchapter.documents || []);
+            }
+           
+            renderChapters();
+        }
+
+        // Guardar capítulo/subcapítulo actual
+        function saveCurrentChapter() {
+            if (appState.currentSubchapter) {
+                // Estamos editando un subcapítulo
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    const subchapter = chapter.subchapters.find(s => s.id === appState.currentSubchapter);
+                    if (subchapter) {
+                        subchapter.title = chapterTitle.value;
+                        subchapter.description = chapterDescription.value;
+                    }
+                }
+            } else if (appState.currentChapter) {
+                // Estamos editando un capítulo
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    chapter.title = chapterTitle.value;
+                    chapter.description = chapterDescription.value;
+                }
+            }
+           
+            renderChapters();
+            saveAppState();
+        }
+
+        // Eliminar capítulo
+        function deleteChapter(chapterId) {
+            if (confirm("¿Estás seguro de que quieres eliminar este capítulo? Se perderán todos sus subcapítulos, diagramas y documentos.")) {
+                appState.chapters = appState.chapters.filter(c => c.id !== chapterId);
+               
+                if (appState.currentChapter === chapterId) {
+                    appState.currentChapter = null;
+                    chapterEditor.style.display = 'none';
+                    diagramsListSection.style.display = 'none';
+                    documentsListSection.style.display = 'none';
+                }
+               
+                renderChapters();
+                saveAppState();
+            }
+        }
+
+        // Eliminar subcapítulo
+        function deleteSubchapter(subchapterId) {
+            if (!appState.currentChapter) return;
+           
+            if (confirm("¿Estás seguro de que quieres eliminar este subcapítulo? Se perderán todos sus diagramas y documentos.")) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    chapter.subchapters = chapter.subchapters.filter(s => s.id !== subchapterId);
+                   
+                    if (appState.currentSubchapter === subchapterId) {
+                        appState.currentSubchapter = null;
+                        chapterEditor.style.display = 'none';
+                        diagramsListSection.style.display = 'none';
+                        documentsListSection.style.display = 'none';
+                    }
+                   
+                    renderChapters();
+                    saveAppState();
+                }
+            }
+        }
+
+        // Mostrar editor de diagramas
+        function showDiagramEditor() {
+            diagramEditor.style.display = 'block';
+            documentEditor.style.display = 'none';
+            appState.editingDiagram = false;
+            appState.currentDiagram = null;
+            diagramEditorTitle.textContent = "Agregar Diagrama";
+           
+            // Restablecer formulario
+            diagramTitle.value = '';
+            diagramDescription.value = '';
+            diagramCode.value = '';
+            diagramImage.value = '';
+            diagramFileName.textContent = "No se ha seleccionado ningún archivo";
+           
+            // Mostrar vista previa vacía
+            diagramPreview.innerHTML = '<p>La vista previa aparecerá aquí</p>';
+        }
+
+        // Mostrar editor de documentos
+        function showDocumentEditor() {
+            documentEditor.style.display = 'block';
+            diagramEditor.style.display = 'none';
+            appState.editingDocument = false;
+            appState.currentDocument = null;
+            documentEditorTitle.textContent = "Agregar Documento";
+           
+            // Restablecer formulario
+            documentTitle.value = '';
+            documentDescription.value = '';
+            documentDate.valueAsDate = new Date();
+            documentFile.value = '';
+            documentFileName.textContent = "No se ha seleccionado ningún archivo";
+           
+            // Establecer tipo PDF por defecto
+            document.querySelectorAll('.document-type .type-option').forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.getAttribute('data-type') === 'pdf') {
+                    opt.classList.add('active');
+                }
+            });
+            documentUploadText.textContent = "Haz clic aquí o arrastra un archivo PDF";
+            documentFile.setAttribute('accept', '.pdf');
+        }
+
+        // Actualizar vista previa del diagrama
+        function updateDiagramPreview() {
+            const title = diagramTitle.value || "Sin título";
+            const description = diagramDescription.value || "Sin descripción";
+            const type = document.querySelector('.diagram-type .type-option.active').getAttribute('data-type');
+           
+            let content = '';
+            if (type === 'mermaid') {
+                content = diagramCode.value;
+                if (content) {
+                    // Intentar renderizar Mermaid
+                    diagramPreview.innerHTML = `
+                        <h4>${title}</h4>
+                        <p>${description}</p>
+                        <div class="mermaid">${content}</div>
+                    `;
+                    try {
+                        mermaid.init(undefined, diagramPreview.querySelectorAll('.mermaid'));
+                    } catch (e) {
+                        diagramPreview.innerHTML = `
+                            <h4>${title}</h4>
+                            <p>${description}</p>
+                            <p style="color: red;">Error al renderizar el diagrama Mermaid: ${e.message}</p>
+                            <pre>${content}</pre>
+                        `;
+                    }
+                } else {
+                    diagramPreview.innerHTML = `
+                        <h4>${title}</h4>
+                        <p>${description}</p>
+                        <p>Ingresa código Mermaid para ver la vista previa</p>
+                    `;
+                }
+            } else {
+                // Tipo imagen
+                if (diagramImage.files.length > 0) {
+                    const file = diagramImage.files[0];
+                    const imageUrl = URL.createObjectURL(file);
+                    diagramPreview.innerHTML = `
+                        <h4>${title}</h4>
+                        <p>${description}</p>
+                        <img src="${imageUrl}" alt="${title}">
+                    `;
+                } else {
+                    diagramPreview.innerHTML = `
+                        <h4>${title}</h4>
+                        <p>${description}</p>
+                        <p>Selecciona una imagen para ver la vista previa</p>
+                    `;
+                }
+            }
+        }
+
+        // Guardar diagrama
+        function saveDiagram() {
+            const title = diagramTitle.value.trim();
+            const description = diagramDescription.value.trim();
+            const type = document.querySelector('.diagram-type .type-option.active').getAttribute('data-type');
+           
+            if (!title) {
+                alert("Por favor, ingresa un título para el diagrama");
+                return;
+            }
+           
+            let content = '';
+            if (type === 'mermaid') {
+                content = diagramCode.value.trim();
+                if (!content) {
+                    alert("Por favor, ingresa el código Mermaid del diagrama");
+                    return;
+                }
+            } else {
+                // Tipo imagen
+                if (diagramImage.files.length === 0) {
+                    alert("Por favor, selecciona una imagen para el diagrama");
+                    return;
+                }
+               
+                const file = diagramImage.files[0];
+                const reader = new FileReader();
+               
+                reader.onload = function(e) {
+                    content = e.target.result;
+                    finishSavingDiagram(title, description, type, content);
+                };
+               
+                reader.readAsDataURL(file);
+                return; // Salir aquí, finishSavingDiagram se llamará cuando se cargue la imagen
+            }
+           
+            finishSavingDiagram(title, description, type, content);
+        }
+
+        // Finalizar guardado del diagrama (después de cargar imagen si es necesario)
+        function finishSavingDiagram(title, description, type, content) {
+            const diagram = {
+                id: appState.currentDiagram || generateId(),
+                title,
+                description,
+                type,
+                content
+            };
+           
+            // Guardar en el capítulo o subcapítulo actual
+            if (appState.currentSubchapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    const subchapter = chapter.subchapters.find(s => s.id === appState.currentSubchapter);
+                    if (subchapter) {
+                        if (!subchapter.diagrams) subchapter.diagrams = [];
+                       
+                        if (appState.editingDiagram) {
+                            // Reemplazar diagrama existente
+                            const index = subchapter.diagrams.findIndex(d => d.id === appState.currentDiagram);
+                            if (index !== -1) {
+                                subchapter.diagrams[index] = diagram;
+                            }
+                        } else {
+                            // Agregar nuevo diagrama
+                            subchapter.diagrams.push(diagram);
+                        }
+                    }
+                }
+            } else if (appState.currentChapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    if (!chapter.diagrams) chapter.diagrams = [];
+                   
+                    if (appState.editingDiagram) {
+                        // Reemplazar diagrama existente
+                        const index = chapter.diagrams.findIndex(d => d.id === appState.currentDiagram);
+                        if (index !== -1) {
+                            chapter.diagrams[index] = diagram;
+                        }
+                    } else {
+                        // Agregar nuevo diagrama
+                        chapter.diagrams.push(diagram);
+                    }
+                }
+            }
+           
+            // Ocultar editor de diagramas y actualizar lista
+            diagramEditor.style.display = 'none';
+            renderCurrentDiagrams();
+            saveAppState();
+        }
+
+        // Guardar documento
+        function saveDocument() {
+            const title = documentTitle.value.trim();
+            const description = documentDescription.value.trim();
+            const date = documentDate.value;
+            const type = document.querySelector('.document-type .type-option.active').getAttribute('data-type');
+           
+            if (!title) {
+                alert("Por favor, ingresa un título para el documento");
+                return;
+            }
+           
+            if (!date) {
+                alert("Por favor, selecciona una fecha para el documento");
+                return;
+            }
+           
+            if (documentFile.files.length === 0) {
+                alert("Por favor, selecciona un archivo para el documento");
+                return;
+            }
+           
+            const file = documentFile.files[0];
+            const reader = new FileReader();
+           
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const document = {
+                    id: appState.currentDocument || generateId(),
+                    title,
+                    description,
+                    date,
+                    type,
+                    file: content
+                };
+               
+                // Guardar en el capítulo o subcapítulo actual
+                if (appState.currentSubchapter) {
+                    const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                    if (chapter) {
+                        const subchapter = chapter.subchapters.find(s => s.id === appState.currentSubchapter);
+                        if (subchapter) {
+                            if (!subchapter.documents) subchapter.documents = [];
+                           
+                            if (appState.editingDocument) {
+                                // Reemplazar documento existente
+                                const index = subchapter.documents.findIndex(d => d.id === appState.currentDocument);
+                                if (index !== -1) {
+                                    subchapter.documents[index] = document;
+                                }
+                            } else {
+                                // Agregar nuevo documento
+                                subchapter.documents.push(document);
+                            }
+                        }
+                    }
+                } else if (appState.currentChapter) {
+                    const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                    if (chapter) {
+                        if (!chapter.documents) chapter.documents = [];
+                       
+                        if (appState.editingDocument) {
+                            // Reemplazar documento existente
+                            const index = chapter.documents.findIndex(d => d.id === appState.currentDocument);
+                            if (index !== -1) {
+                                chapter.documents[index] = document;
+                            }
+                        } else {
+                            // Agregar nuevo documento
+                            chapter.documents.push(document);
+                        }
+                    }
+                }
+               
+                // Ocultar editor de documentos y actualizar lista
+                documentEditor.style.display = 'none';
+                renderCurrentDocuments();
+                saveAppState();
+            };
+           
+            reader.readAsDataURL(file);
+        }
+
+        // Cancelar edición de diagrama
+        function cancelDiagramEditing() {
+            diagramEditor.style.display = 'none';
+        }
+
+        // Cancelar edición de documento
+        function cancelDocumentEditing() {
+            documentEditor.style.display = 'none';
+        }
+
+        // Renderizar diagramas actuales
+        function renderCurrentDiagrams() {
+            let diagrams = [];
+           
+            if (appState.currentSubchapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    const subchapter = chapter.subchapters.find(s => s.id === appState.currentSubchapter);
+                    if (subchapter) {
+                        diagrams = subchapter.diagrams || [];
+                    }
+                }
+            } else if (appState.currentChapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    diagrams = chapter.diagrams || [];
+                }
+            }
+           
+            renderDiagrams(diagrams);
+        }
+
+        // Renderizar documentos actuales
+        function renderCurrentDocuments() {
+            let documents = [];
+           
+            if (appState.currentSubchapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    const subchapter = chapter.subchapters.find(s => s.id === appState.currentSubchapter);
+                    if (subchapter) {
+                        documents = subchapter.documents || [];
+                    }
+                }
+            } else if (appState.currentChapter) {
+                const chapter = appState.chapters.find(c => c.id === appState.currentChapter);
+                if (chapter) {
+                    documents = chapter.documents || [];
+                }
+            }
+           
+            renderDocuments(documents);
+        }
+
+        // Renderizar lista de diagramas
+        function renderDiagrams(diagrams) {
+            if (diagrams.length === 0) {
+                diagramsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>No hay diagramas disponibles. Agrega un diagrama para verlo aquí.</p>
+                    </div>
+                `;
+                return;
+            }
+           
+            diagramsList.innerHTML = diagrams.map(diagram => `
+                <div class="diagram-card">
+                    <div class="diagram-card-header">
+                        <div class="diagram-card-title">${diagram.title}</div>
+                        <div class="diagram-card-description">${diagram.description}</div>
+                        <div class="diagram-card-actions">
+                            <button class="diagram-card-btn edit-btn" data-id="${diagram.id}">Editar</button>
+                            <button class="diagram-card-btn delete-btn" data-id="${diagram.id}">Eliminar</button>
+                        </div>
+                    </div>
+                    <div class="diagram-card-content" data-id="${diagram.id}">
+                        ${diagram.type === 'mermaid' ?
+                            `<div class="mermaid">${diagram.content}</div>` :
+                            `<img src="${diagram.content}" alt="${diagram.title}">`
+                        }
+                    </div>
+                </div>
+            `).join('');
+           
+            // Renderizar diagramas Mermaid
+            setTimeout(() => {
+                try {
+                    mermaid.init(undefined, diagramsList.querySelectorAll('.mermaid'));
+                } catch (e) {
+                    console.error("Error al renderizar diagramas Mermaid:", e);
+                }
+            }, 100);
+           
+            // Agregar event listeners a los botones de edición y eliminación
+            document.querySelectorAll('.diagram-card .edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const diagramId = this.getAttribute('data-id');
+                    editDiagram(diagramId);
+                });
+            });
+           
+            document.querySelectorAll('.diagram-card .delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const diagramId = this.getAttribute('data-id');
+                    deleteDiagram(diagramId);
+                });
+            });
+           
+            // Agregar event listeners para abrir la imagen en modal
+            document.querySelectorAll('.diagram-card-content').forEach(content => {
+                content.addEventListener('click', function() {
+                    const diagramId = this.getAttribute('data-id');
+                    openDiagramInModal(diagramId);
+                });
+            });
+        }
+
+        // Renderizar lista de documentos
+        function renderDocuments(documents) {
+            if (documents.length === 0) {
+                documentsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>No hay documentos disponibles. Agrega un documento para verlo aquí.</p>
+                    </div>
+                `;
+                return;
+            }
+           
+            documentsList.innerHTML = documents.map(doc => `
+                <div class="document-card">
+                    <div class="document-card-header">
+                        <div class="docum
+...
