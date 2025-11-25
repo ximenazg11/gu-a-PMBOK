@@ -1,0 +1,233 @@
+/* ----------- ESTILOS GENERALES ----------- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  display: flex;
+  min-height: 100vh;
+  background: #f3f6f9;
+  color: #222;
+}
+
+/* ----------- SIDEBAR (LADO IZQUIERDO) ----------- */
+.sidebar {
+  width: 300px;
+  background: #2c3e50;
+  color: white;
+  padding: 16px;
+  height: 100vh;
+  overflow: auto;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.sidebar-header h2 {
+  margin: 0 0 8px 0;
+}
+
+.sidebar-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sidebar-controls button {
+  flex: 1;
+  padding: 8px;
+  border: 0;
+  background: #3498db;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.chapters-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chapter-item {
+  border-radius: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.chapter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #34495e;
+  cursor: pointer;
+}
+
+.chapter-header.active {
+  background: #1abc9c;
+  color: #073;
+}
+
+.subchapters-list {
+  list-style: none;
+  padding-left: 12px;
+  margin: 0;
+  background: #2a3b4d;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.chapter-item.expanded .subchapters-list {
+  max-height: 400px;
+  padding: 8px 0;
+}
+
+/* ----------- CONTENIDO PRINCIPAL ----------- */
+.main-content {
+  margin-left: 320px;
+  padding: 24px;
+  flex: 1;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor-controls button {
+  margin-left: 8px;
+  padding: 8px 12px;
+  border: 0;
+  background: #2980b9;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ----------- PANEL GENERAL ----------- */
+.panel {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-top: 16px;
+}
+
+.panel.hidden {
+  display: none;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ----------- TIPOS DE DIAGRAMA Y DOCUMENTO ----------- */
+.type-row {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.type-option,
+.doc-type-option {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+}
+
+.type-option.active,
+.doc-type-option.active {
+  background: #ecf8ff;
+  border-color: #3498db;
+}
+
+/* ----------- PREVISUALIZACIÓN ----------- */
+.preview {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #f6f8fa;
+  min-height: 80px;
+  text-align: center;
+}
+
+/* ----------- TARJETAS ----------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e6eef5;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.card .title {
+  font-weight: 600;
+}
+
+.card .meta {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* ----------- MODAL ----------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+input[type="file"] {
+  display: block;
+  margin-top: 6px;
+}
+
+/* ----------- RESPONSIVE ----------- */
+@media (max-width: 800px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 12px;
+  }
+}
